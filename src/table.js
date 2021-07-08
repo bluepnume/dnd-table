@@ -3,8 +3,64 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 
 class TableCell extends Component {
+
+  getSnapshotBeforeUpdate(prevProps) {
+    if (!this.ref) {
+      return null;
+    }
+
+    const isDragStarting =
+      this.props.isDragOccurring && !prevProps.isDragOccurring;
+
+    if (!isDragStarting) {
+      return null;
+    }
+
+    const { width, height } = this.ref.getBoundingClientRect();
+
+    const snapshot = {
+      width,
+      height,
+    };
+
+    return snapshot;
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    const ref = this.ref;
+    if (!ref) {
+      return;
+    }
+
+    if (snapshot) {
+      if (ref.style.width === snapshot.width) {
+        return;
+      }
+      ref.style.width = `${snapshot.width}px`;
+      ref.style.height = `${snapshot.height}px`;
+      return;
+    }
+
+    if (this.props.isDragOccurring) {
+      return;
+    }
+
+    // inline styles not applied
+    if (ref.style.width == null) {
+      return;
+    }
+
+    // no snapshot and drag is finished - clear the inline styles
+    ref.style.removeProperty('height');
+    ref.style.removeProperty('width');
+  }
+
+  setRef = (ref) => {
+    this.ref = ref;
+  }
+
   render() {
-    return <td>
+    return <td ref={this.setRef}>
       {this.props.children}
     </td>
   }
@@ -32,18 +88,7 @@ const reorder = (list, startIndex, endIndex) => {
   return result;
 };
 
-const grid = 8;
-
-const getItemStyle = (isDragging, draggableStyle) => ({
-  // some basic styles to make the items look a bit nicer
-  userSelect: "none",
-  padding: grid * 2,
-  margin: `0 0 ${grid}px 0`,
-
-  // change background colour if dragging
-  background: isDragging ? "lightgreen" : "grey",
-
-  // styles we need to apply on draggables
+const getRowStyle = (isDragging, draggableStyle) => ({
   ...draggableStyle
 });
 
@@ -55,9 +100,16 @@ export class Table extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      isDragging: false,
       items: getItems(10)
     };
     this.onDragEnd = this.onDragEnd.bind(this);
+  }
+
+  onBeforeDragStart() {
+    this.setState({
+      isDragging: true,
+    });
   }
 
   onDragEnd(result) {
@@ -73,6 +125,7 @@ export class Table extends Component {
     );
 
     this.setState({
+      isDragging: true,
       items
     });
   }
@@ -81,7 +134,7 @@ export class Table extends Component {
   // But in this example everything is just done in one place for simplicity
   render() {
     return (
-      <DragDropContext onDragEnd={this.onDragEnd}>
+      <DragDropContext onBeforeDragStart={() => this.onBeforeDragStart()} onDragEnd={this.onDragEnd}>
         <Droppable droppableId="droppable">
           {(provided, snapshot) => (
             <table
@@ -96,24 +149,24 @@ export class Table extends Component {
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
-                      style={getItemStyle(
+                      style={getRowStyle(
                         snapshot.isDragging,
                         provided.draggableProps.style
                       )}
                     >
-                      <TableCell>
+                      <TableCell isDragOccurring={this.state.isDragging}>
                         {item.thing1}
                       </TableCell>
-                      <TableCell>
+                      <TableCell isDragOccurring={this.state.isDragging}>
                         {item.thing2}
                       </TableCell>
-                      <TableCell>
+                      <TableCell isDragOccurring={this.state.isDragging}>
                         {item.thing3}
                       </TableCell>
-                      <TableCell>
+                      <TableCell isDragOccurring={this.state.isDragging}>
                         {item.thing4}
                       </TableCell>
-                      <TableCell>
+                      <TableCell isDragOccurring={this.state.isDragging}>
                         {item.thing5}
                       </TableCell>
                     </tr>
