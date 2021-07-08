@@ -1,6 +1,17 @@
 import React, { Component } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
+
+class TableCell extends Component {
+  render() {
+    return <td>
+      {this.props.children}
+    </td>
+  }
+}
+
+
+
 // fake data generator
 const getItems = count =>
   Array.from({ length: count }, (v, k) => k).map(k => ({
@@ -90,21 +101,21 @@ export class Table extends Component {
                         provided.draggableProps.style
                       )}
                     >
-                      <td>
+                      <TableCell>
                         {item.thing1}
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         {item.thing2}
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         {item.thing3}
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         {item.thing4}
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         {item.thing5}
-                      </td>
+                      </TableCell>
                     </tr>
                   )}
                 </Draggable>
